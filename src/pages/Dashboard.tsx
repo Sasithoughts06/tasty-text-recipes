@@ -3,21 +3,42 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChefHat, Search, MessageSquare, BookOpen, TrendingUp, Clock, Heart } from "lucide-react";
+import { ChefHat, Search, MessageSquare, BookOpen, TrendingUp, Clock, Heart, LogOut, User } from "lucide-react";
 
 const Dashboard = () => {
   const [userName] = useState("Chef Sarah");
 
   const recentRecipes = [
-    { id: 1, name: "Creamy Pasta Carbonara", time: "25 min", difficulty: "Easy", likes: 142 },
-    { id: 2, name: "Thai Green Curry", time: "35 min", difficulty: "Medium", likes: 98 },
-    { id: 3, name: "Chocolate Lava Cake", time: "20 min", difficulty: "Easy", likes: 203 }
+    { 
+      id: 1, 
+      name: "Spaghetti Carbonara", 
+      time: "20 min", 
+      difficulty: "Medium", 
+      likes: 142,
+      category: "pasta"
+    },
+    { 
+      id: 2, 
+      name: "Honey Garlic Chicken", 
+      time: "30 min", 
+      difficulty: "Easy", 
+      likes: 98,
+      category: "chicken"
+    },
+    { 
+      id: 3, 
+      name: "Chocolate Cake", 
+      time: "60 min", 
+      difficulty: "Medium", 
+      likes: 203,
+      category: "cake"
+    }
   ];
 
   const trendingRecipes = [
-    { id: 1, name: "Air Fryer Chicken Wings", trend: "+25%" },
-    { id: 2, name: "Vegan Buddha Bowl", trend: "+18%" },
-    { id: 3, name: "Sourdough Bread", trend: "+31%" }
+    { id: 1, name: "Margherita Pizza", trend: "+25%", category: "pizza" },
+    { id: 2, name: "Chicken Tikka Masala", trend: "+18%", category: "curry" },
+    { id: 3, name: "Creamy Mushroom Pasta", trend: "+31%", category: "pasta" }
   ];
 
   return (
@@ -35,8 +56,15 @@ const Dashboard = () => {
             <div className="flex items-center space-x-3">
               <span className="text-gray-600">Welcome back, {userName}!</span>
               <Button variant="outline" size="sm" className="border-recipe-orange text-recipe-orange hover:bg-recipe-orange hover:text-white">
+                <User className="w-4 h-4 mr-2" />
                 Profile
               </Button>
+              <Link to="/login">
+                <Button variant="outline" size="sm" className="border-recipe-red text-recipe-red hover:bg-recipe-red hover:text-white">
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Logout
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
@@ -122,25 +150,31 @@ const Dashboard = () => {
             <CardContent>
               <div className="space-y-4">
                 {recentRecipes.map((recipe, index) => (
-                  <div key={recipe.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors" style={{ animationDelay: `${0.5 + index * 0.1}s` }}>
-                    <div>
-                      <h4 className="font-semibold text-gray-800">{recipe.name}</h4>
-                      <div className="flex items-center space-x-4 text-sm text-gray-600">
-                        <span className="flex items-center">
-                          <Clock className="w-4 h-4 mr-1" />
-                          {recipe.time}
-                        </span>
-                        <span>{recipe.difficulty}</span>
-                        <span className="flex items-center">
-                          <Heart className="w-4 h-4 mr-1 text-recipe-red" />
-                          {recipe.likes}
-                        </span>
+                  <Link 
+                    key={recipe.id} 
+                    to={`/recipe-generator?search=${recipe.category}`}
+                    className="block"
+                  >
+                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer" style={{ animationDelay: `${0.5 + index * 0.1}s` }}>
+                      <div>
+                        <h4 className="font-semibold text-gray-800">{recipe.name}</h4>
+                        <div className="flex items-center space-x-4 text-sm text-gray-600">
+                          <span className="flex items-center">
+                            <Clock className="w-4 h-4 mr-1" />
+                            {recipe.time}
+                          </span>
+                          <span>{recipe.difficulty}</span>
+                          <span className="flex items-center">
+                            <Heart className="w-4 h-4 mr-1 text-recipe-red" />
+                            {recipe.likes}
+                          </span>
+                        </div>
                       </div>
+                      <Button variant="ghost" size="sm" className="text-recipe-orange hover:text-recipe-orange-dark">
+                        View Recipe
+                      </Button>
                     </div>
-                    <Button variant="ghost" size="sm" className="text-recipe-orange hover:text-recipe-orange-dark">
-                      View
-                    </Button>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </CardContent>
@@ -155,22 +189,62 @@ const Dashboard = () => {
             <CardContent>
               <div className="space-y-4">
                 {trendingRecipes.map((recipe, index) => (
-                  <div key={recipe.id} className="flex items-center justify-between p-4 bg-gradient-to-r from-recipe-orange/10 to-recipe-green/10 rounded-lg hover:from-recipe-orange/20 hover:to-recipe-green/20 transition-all" style={{ animationDelay: `${0.6 + index * 0.1}s` }}>
-                    <div>
-                      <h4 className="font-semibold text-gray-800">{recipe.name}</h4>
-                      <div className="flex items-center text-sm text-recipe-green font-medium">
-                        <TrendingUp className="w-4 h-4 mr-1" />
-                        {recipe.trend}
+                  <Link 
+                    key={recipe.id}
+                    to={`/recipe-generator?search=${recipe.category}`}
+                    className="block"
+                  >
+                    <div className="flex items-center justify-between p-4 bg-gradient-to-r from-recipe-orange/10 to-recipe-green/10 rounded-lg hover:from-recipe-orange/20 hover:to-recipe-green/20 transition-all cursor-pointer" style={{ animationDelay: `${0.6 + index * 0.1}s` }}>
+                      <div>
+                        <h4 className="font-semibold text-gray-800">{recipe.name}</h4>
+                        <div className="flex items-center text-sm text-recipe-green font-medium">
+                          <TrendingUp className="w-4 h-4 mr-1" />
+                          {recipe.trend}
+                        </div>
                       </div>
+                      <Button variant="ghost" size="sm" className="text-recipe-green hover:text-recipe-green-dark">
+                        Try Now
+                      </Button>
                     </div>
-                    <Button variant="ghost" size="sm" className="text-recipe-green hover:text-recipe-green-dark">
-                      Try Now
-                    </Button>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="mt-12 text-center animate-fade-in" style={{ animationDelay: '0.8s' }}>
+          <h3 className="text-2xl font-bold text-gray-800 mb-6">What would you like to do?</h3>
+          <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+            <Link to="/recipe-generator">
+              <Card className="food-card hover-lift cursor-pointer border-0">
+                <CardContent className="p-6 text-center">
+                  <Search className="w-12 h-12 text-recipe-orange mx-auto mb-4" />
+                  <h4 className="font-semibold text-gray-800 mb-2">Find New Recipes</h4>
+                  <p className="text-sm text-gray-600">Search for recipes by dish name or ingredients</p>
+                </CardContent>
+              </Card>
+            </Link>
+            
+            <Link to="/assistant">
+              <Card className="food-card hover-lift cursor-pointer border-0">
+                <CardContent className="p-6 text-center">
+                  <MessageSquare className="w-12 h-12 text-recipe-green mx-auto mb-4" />
+                  <h4 className="font-semibold text-gray-800 mb-2">Ask Cooking Assistant</h4>
+                  <p className="text-sm text-gray-600">Get cooking tips and recipe suggestions</p>
+                </CardContent>
+              </Card>
+            </Link>
+            
+            <Card className="food-card hover-lift cursor-pointer border-0">
+              <CardContent className="p-6 text-center">
+                <Heart className="w-12 h-12 text-recipe-red mx-auto mb-4" />
+                <h4 className="font-semibold text-gray-800 mb-2">My Favorites</h4>
+                <p className="text-sm text-gray-600">View your saved and liked recipes</p>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     </div>
