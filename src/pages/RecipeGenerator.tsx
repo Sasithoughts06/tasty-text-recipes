@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ChefHat, Search, Clock, Users, Sparkles, ArrowLeft } from "lucide-react";
+import { ChefHat, ArrowLeft, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import IngredientInput from "@/components/IngredientInput";
+import RecipeCard from "@/components/RecipeCard";
 
 // Comprehensive Indian recipe database
 const RECIPE_DATABASE = {
@@ -368,7 +369,7 @@ const RECIPE_DATABASE = {
 };
 
 const RecipeGenerator = () => {
-  const [searchQuery, setSearchQuery] = useState("");
+  const [ingredients, setIngredients] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [recipes, setRecipes] = useState<any[]>([]);
   const [cookingMode, setCookingMode] = useState<{recipeId: number, currentStep: number} | null>(null);
@@ -395,60 +396,58 @@ const RecipeGenerator = () => {
     return foundRecipes;
   };
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!searchQuery.trim()) return;
+  const handleSearch = async () => {
+    if (ingredients.length === 0) return;
     
     setIsLoading(true);
     
     // Simulate API call delay
     setTimeout(() => {
-      const foundRecipes = findRecipes(searchQuery);
+      let foundRecipes: any[] = [];
       
-      if (foundRecipes.length === 0) {
-        // Generate a simple recipe if no exact match
+      ingredients.forEach(ingredient => {
+        const searchRecipes = findRecipes(ingredient);
+        foundRecipes = [...foundRecipes, ...searchRecipes];
+      });
+      
+      // Remove duplicates
+      const uniqueRecipes = foundRecipes.filter((recipe, index, self) => 
+        index === self.findIndex(r => r.id === recipe.id)
+      );
+      
+      if (uniqueRecipes.length === 0) {
         const genericRecipe = {
           id: 999,
-          name: `${searchQuery.charAt(0).toUpperCase() + searchQuery.slice(1)} Recipe`,
-          description: `A delicious ${searchQuery} recipe made with fresh ingredients`,
+          name: `Delicious ${ingredients.join(' & ')} Recipe`,
+          description: `A wonderful homemade dish using your ${ingredients.join(', ')}`,
           cookTime: "30 min",
           servings: 4,
           difficulty: "Easy",
           ingredients: [
-            "Main ingredients for " + searchQuery,
-            "Seasonings and spices",
-            "Oil or butter for cooking",
-            "Salt and pepper to taste"
+            ...ingredients.map(ing => `Fresh ${ing}`),
+            "Salt and spices to taste",
+            "Oil for cooking",
+            "Love and patience 💛"
           ],
           instructions: [
-            "Prepare and clean all ingredients",
+            "Prepare and clean all your ingredients with care",
             "Heat oil in a pan over medium heat",
-            "Cook main ingredients until tender",
-            "Season with salt, pepper, and spices",
-            "Serve hot and enjoy!"
+            "Add your main ingredients and cook until tender",
+            "Season with salt, pepper, and your favorite spices",
+            "Cook with love and serve hot to your loved ones!"
           ]
         };
         setRecipes([genericRecipe]);
       } else {
-        setRecipes(foundRecipes);
+        setRecipes(uniqueRecipes);
       }
       
       setIsLoading(false);
       toast({
-        title: "Recipes Found!",
-        description: `Found ${foundRecipes.length || 1} delicious recipe(s) for "${searchQuery}"`,
+        title: "Perfect! Here are your recipes! 🍳",
+        description: `I found ${uniqueRecipes.length || 1} amazing recipe${uniqueRecipes.length !== 1 ? 's' : ''} for you to try!`,
       });
     }, 1500);
-  };
-
-  const handleSuggestionClick = (suggestion: string) => {
-    setSearchQuery(suggestion);
-    const foundRecipes = findRecipes(suggestion);
-    setRecipes(foundRecipes);
-    toast({
-      title: "Recipe Loaded!",
-      description: `Showing recipes for "${suggestion}"`,
-    });
   };
 
   const handleStartCooking = (recipe: any) => {
@@ -501,7 +500,7 @@ const RecipeGenerator = () => {
               <div className="w-10 h-10 bg-recipe-orange rounded-full flex items-center justify-center">
                 <ChefHat className="w-6 h-6 text-white" />
               </div>
-              <h1 className="text-2xl font-bold text-gray-800">Recipe Generator</h1>
+              <h1 className="text-2xl font-bold text-gray-800">Your Kitchen Companion</h1>
             </div>
           </div>
         </div>
@@ -552,50 +551,30 @@ const RecipeGenerator = () => {
           </div>
         )}
 
-        {/* Search Section */}
+        {/* Main Content */}
         <div className="max-w-2xl mx-auto mb-12 text-center animate-fade-in">
           <h2 className="text-4xl font-bold text-gray-800 mb-4">
-            What ingredients do you have?
+            What's in your kitchen today? 🥘
           </h2>
           <p className="text-xl text-gray-600 mb-8">
-            Tell us what ingredients you have, and we'll find authentic Indian recipes for you!
+            Tell me what ingredients you have, and I'll help you create something delicious! 
+            Don't worry if it's just a few items - we'll make magic happen together! ✨
           </p>
           
-          <form onSubmit={handleSearch} className="flex gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <Input
-                type="text"
-                placeholder="e.g., beans, cabbage, egg, meat, chicken, onion..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-12 py-4 text-lg border-recipe-orange/30 focus:border-recipe-orange focus:ring-recipe-orange/20 rounded-full"
-              />
-            </div>
-            <Button
-              type="submit"
-              className="bg-recipe-orange hover:bg-recipe-orange-dark text-white px-8 py-4 rounded-full hover-lift"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <div className="flex items-center">
-                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-2"></div>
-                  Searching...
-                </div>
-              ) : (
-                <>
-                  <Sparkles className="mr-2 w-5 h-5" />
-                  Find Recipe
-                </>
-              )}
-            </Button>
-          </form>
+          <IngredientInput
+            ingredients={ingredients}
+            onIngredientsChange={setIngredients}
+            onSearch={handleSearch}
+            isLoading={isLoading}
+          />
         </div>
 
         {/* Quick Suggestions */}
-        {recipes.length === 0 && (
+        {recipes.length === 0 && ingredients.length === 0 && (
           <div className="max-w-4xl mx-auto mb-12 animate-fade-in" style={{ animationDelay: '0.2s' }}>
-            <h3 className="text-2xl font-bold text-gray-800 mb-6 text-center">Popular Ingredients</h3>
+            <h3 className="text-2xl font-bold text-gray-800 mb-6 text-center">
+              Need inspiration? Try these popular ingredients! 🌟
+            </h3>
             <div className="flex flex-wrap gap-3 justify-center">
               {[
                 "beans", "cabbage", "egg", "meat", "chicken", 
@@ -605,7 +584,7 @@ const RecipeGenerator = () => {
                   key={suggestion}
                   variant="outline"
                   className="cursor-pointer hover:bg-recipe-orange hover:text-white hover:border-recipe-orange px-4 py-2 text-sm font-medium border-recipe-orange/50 text-recipe-orange transition-all hover-lift"
-                  onClick={() => handleSuggestionClick(suggestion)}
+                  onClick={() => setIngredients([...ingredients, suggestion])}
                   style={{ animationDelay: `${0.3 + index * 0.1}s` }}
                 >
                   {suggestion.charAt(0).toUpperCase() + suggestion.slice(1)}
@@ -619,81 +598,16 @@ const RecipeGenerator = () => {
         {recipes.length > 0 && (
           <div className="max-w-6xl mx-auto">
             <h3 className="text-3xl font-bold text-gray-800 mb-8 text-center animate-fade-in">
-              Perfect Recipes with "{searchQuery}"
+              Perfect! Here's what we can make together! 👨‍🍳
             </h3>
             
             <div className="grid lg:grid-cols-1 gap-8 max-w-4xl mx-auto">
               {recipes.map((recipe, index) => (
-                <Card
+                <RecipeCard
                   key={recipe.id}
-                  className="food-card hover-lift animate-fade-in border-0"
-                  style={{ animationDelay: `${0.4 + index * 0.2}s` }}
-                >
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <CardTitle className="text-2xl text-gray-800 mb-2">{recipe.name}</CardTitle>
-                        <CardDescription className="text-gray-600 text-base">
-                          {recipe.description}
-                        </CardDescription>
-                      </div>
-                      <Badge className="bg-recipe-green text-white">
-                        {recipe.difficulty}
-                      </Badge>
-                    </div>
-                    
-                    <div className="flex items-center space-x-6 text-sm text-gray-600 mt-4">
-                      <div className="flex items-center">
-                        <Clock className="w-4 h-4 mr-1 text-recipe-orange" />
-                        {recipe.cookTime}
-                      </div>
-                      <div className="flex items-center">
-                        <Users className="w-4 h-4 mr-1 text-recipe-green" />
-                        {recipe.servings} servings
-                      </div>
-                    </div>
-                  </CardHeader>
-                  
-                  <CardContent className="space-y-6">
-                    <div>
-                      <h4 className="font-semibold text-gray-800 mb-3">Ingredients:</h4>
-                      <ul className="space-y-2">
-                        {recipe.ingredients.map((ingredient: string, idx: number) => (
-                          <li key={idx} className="text-gray-600 text-sm flex items-start">
-                            <span className="w-2 h-2 bg-recipe-orange rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                            {ingredient}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                    
-                    <div>
-                      <h4 className="font-semibold text-gray-800 mb-3">Instructions:</h4>
-                      <ol className="space-y-3">
-                        {recipe.instructions.map((step: string, idx: number) => (
-                          <li key={idx} className="text-gray-600 text-sm flex items-start">
-                            <span className="bg-recipe-green text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-medium mr-3 flex-shrink-0 mt-0.5">
-                              {idx + 1}
-                            </span>
-                            {step}
-                          </li>
-                        ))}
-                      </ol>
-                    </div>
-                    
-                    <div className="flex gap-3 pt-4">
-                      <Button 
-                        className="flex-1 bg-recipe-orange hover:bg-recipe-orange-dark text-white"
-                        onClick={() => handleStartCooking(recipe)}
-                      >
-                        Start Cooking
-                      </Button>
-                      <Button variant="outline" className="border-recipe-green text-recipe-green hover:bg-recipe-green hover:text-white">
-                        Save Recipe
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                  recipe={recipe}
+                  onStartCooking={handleStartCooking}
+                />
               ))}
             </div>
             
@@ -702,11 +616,12 @@ const RecipeGenerator = () => {
                 variant="outline" 
                 onClick={() => {
                   setRecipes([]);
-                  setSearchQuery("");
+                  setIngredients([]);
                 }}
                 className="border-recipe-orange text-recipe-orange hover:bg-recipe-orange hover:text-white"
               >
-                Search for Another Recipe
+                <Sparkles className="w-4 h-4 mr-2" />
+                Let's Cook Something Else!
               </Button>
             </div>
           </div>
