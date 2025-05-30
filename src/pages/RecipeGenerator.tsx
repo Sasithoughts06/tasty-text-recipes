@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -372,6 +371,7 @@ const RecipeGenerator = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [recipes, setRecipes] = useState<any[]>([]);
+  const [cookingMode, setCookingMode] = useState<{recipeId: number, currentStep: number} | null>(null);
   const { toast } = useToast();
 
   const findRecipes = (query: string) => {
@@ -451,6 +451,40 @@ const RecipeGenerator = () => {
     });
   };
 
+  const handleStartCooking = (recipe: any) => {
+    setCookingMode({ recipeId: recipe.id, currentStep: 0 });
+    toast({
+      title: "Let's Start Cooking!",
+      description: `Starting to cook ${recipe.name}. Follow the step-by-step instructions.`,
+    });
+  };
+
+  const handleNextStep = () => {
+    if (cookingMode) {
+      const currentRecipe = recipes.find(r => r.id === cookingMode.recipeId);
+      if (currentRecipe && cookingMode.currentStep < currentRecipe.instructions.length - 1) {
+        setCookingMode({
+          ...cookingMode,
+          currentStep: cookingMode.currentStep + 1
+        });
+      } else {
+        toast({
+          title: "Cooking Complete!",
+          description: "Congratulations! You've finished cooking. Enjoy your meal!",
+        });
+        setCookingMode(null);
+      }
+    }
+  };
+
+  const handleStopCooking = () => {
+    setCookingMode(null);
+    toast({
+      title: "Cooking Stopped",
+      description: "You can restart cooking anytime by clicking the Start Cooking button.",
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-red-50">
       {/* Header */}
@@ -474,6 +508,50 @@ const RecipeGenerator = () => {
       </div>
 
       <div className="container mx-auto px-4 py-8">
+        {/* Cooking Mode Overlay */}
+        {cookingMode && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <Card className="w-full max-w-2xl bg-white">
+              <CardHeader>
+                <CardTitle className="text-2xl text-center">
+                  {recipes.find(r => r.id === cookingMode.recipeId)?.name}
+                </CardTitle>
+                <div className="text-center text-sm text-gray-600">
+                  Step {cookingMode.currentStep + 1} of {recipes.find(r => r.id === cookingMode.recipeId)?.instructions.length}
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="text-center">
+                  <div className="bg-recipe-orange text-white rounded-full w-12 h-12 flex items-center justify-center text-xl font-bold mx-auto mb-4">
+                    {cookingMode.currentStep + 1}
+                  </div>
+                  <p className="text-lg text-gray-800">
+                    {recipes.find(r => r.id === cookingMode.recipeId)?.instructions[cookingMode.currentStep]}
+                  </p>
+                </div>
+                <div className="flex gap-3 justify-center">
+                  <Button 
+                    onClick={handleNextStep}
+                    className="bg-recipe-green hover:bg-recipe-green/90 text-white"
+                  >
+                    {cookingMode.currentStep < (recipes.find(r => r.id === cookingMode.recipeId)?.instructions.length || 0) - 1 
+                      ? "Next Step" 
+                      : "Finish Cooking"
+                    }
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={handleStopCooking}
+                    className="border-gray-400 text-gray-600 hover:bg-gray-100"
+                  >
+                    Stop Cooking
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         {/* Search Section */}
         <div className="max-w-2xl mx-auto mb-12 text-center animate-fade-in">
           <h2 className="text-4xl font-bold text-gray-800 mb-4">
@@ -604,7 +682,10 @@ const RecipeGenerator = () => {
                     </div>
                     
                     <div className="flex gap-3 pt-4">
-                      <Button className="flex-1 bg-recipe-orange hover:bg-recipe-orange-dark text-white">
+                      <Button 
+                        className="flex-1 bg-recipe-orange hover:bg-recipe-orange-dark text-white"
+                        onClick={() => handleStartCooking(recipe)}
+                      >
                         Start Cooking
                       </Button>
                       <Button variant="outline" className="border-recipe-green text-recipe-green hover:bg-recipe-green hover:text-white">
